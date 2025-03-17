@@ -10,6 +10,7 @@ import pkg from 'electron-squirrel-startup';
 const { electronSquirrelStartup } = pkg;
 import windowManager from './main/windows/windowManager.js';
 import ipcManager from './main/ipc/ipcManager.js';
+import stateStore from './main/state/store.js';
 import logger from './utils/logger/index.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
@@ -29,6 +30,12 @@ function initializeApp() {
   // Initialize the IPC manager
   ipcManager.initialize();
 
+  // Initialize the state store
+  stateStore.initialize();
+
+  // Set application as ready
+  stateStore.setState('app', 'isReady', true);
+
   // Create the main application window
   windowManager.createMainWindow();
 
@@ -40,6 +47,9 @@ function initializeApp() {
  */
 function cleanupApp() {
   log.info('Cleaning up application resources');
+
+  // Shutdown the state store
+  stateStore.shutdown();
 
   // Shutdown the IPC manager
   ipcManager.shutdown();

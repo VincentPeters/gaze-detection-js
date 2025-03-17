@@ -5,61 +5,63 @@
  * It handles the main UI layout and communication with the main process.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useAppStateContext } from '../state/StateProvider';
 
 /**
  * App component
  * @returns {JSX.Element} The rendered component
  */
 function App() {
-  // State for storing messages from the main process
-  const [message, setMessage] = useState('Initializing...');
-  // State for tracking connection status
-  const [connected, setConnected] = useState(false);
+  // Get app state from context
+  const { isReady, theme, errors, addError } = useAppStateContext();
 
-  // Effect for setting up IPC communication
+  // Effect for handling errors
   useEffect(() => {
-    // Check if we're running in Electron with IPC available
-    if (window.api) {
-      // Set up listener for messages from the main process
-      const handleMessage = (data) => {
-        setMessage(data);
-        setConnected(true);
-      };
+    // Set up global error handler
+    const handleError = (error) => {
+      addError({
+        message: error.message,
+        timestamp: new Date().toISOString(),
+        stack: error.stack
+      });
+    };
 
-      // Register the listener
-      window.api.receive('fromMain', handleMessage);
+    // Add error event listener
+    window.addEventListener('error', handleError);
 
-      // Send a message to the main process to establish connection
-      window.api.send('toMain', 'Hello from renderer process');
-
-      // Clean up the listener when the component unmounts
-      return () => {
-        // If we had a removeListener method in our API
-        if (window.api.removeListener) {
-          window.api.removeListener('fromMain', handleMessage);
-        }
-      };
-    } else {
-      // We're not in Electron or IPC is not available
-      setMessage('Welcome to Gaze Detection (IPC not available)');
-      setConnected(false);
-    }
-  }, []);
+    // Clean up
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, [addError]);
 
   return (
-    <div className="app">
+    <div className={`app ${theme}`}>
       <header className="app-header">
         <h1>Eye Contact Detection</h1>
-        <p className={`connection-status ${connected ? 'connected' : 'disconnected'}`}>
-          {connected ? 'Connected to main process' : 'Not connected to main process'}
+        <p className={`connection-status ${isReady ? 'connected' : 'disconnected'}`}>
+          {isReady ? 'Application Ready' : 'Initializing...'}
         </p>
       </header>
 
       <main className="app-content">
         <p>Welcome to the eye contact detection application.</p>
         <p>This application will use your webcam to detect eye contact.</p>
-        <p className="message">{message}</p>
+
+        {/* Display errors if any */}
+        {errors && errors.length > 0 && (
+          <div className="error-container">
+            <h3>Errors:</h3>
+            <ul>
+              {errors.map((error, index) => (
+                <li key={index} className="error-message">
+                  {error.message} - {error.timestamp}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </main>
 
       <footer className="app-footer">
