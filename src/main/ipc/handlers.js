@@ -6,9 +6,11 @@
  */
 
 import { app, BrowserWindow } from 'electron';
-import { createSuccessResponse, createErrorResponse } from '../../shared/ipc/message.js';
+import { ipcMain } from 'electron';
 import logger from '../../utils/logger/index.js';
+import { createSuccessResponse, createErrorResponse } from '../../shared/ipc/message.js';
 import { getChannel } from '../../shared/ipc/channels.js';
+const { setTimeout } = global;
 
 // Import window manager
 import windowManager from '../windows/windowManager.js';
@@ -38,11 +40,35 @@ export const appHandlers = {
       });
     } catch (error) {
       logger.error('Error handling app:ready message', error);
-      return createErrorResponse(message, {
-        message: 'Failed to process app:ready message',
-        details: error.message,
-        severity: 'error'
+      return createErrorResponse(message, error.message);
+    }
+  },
+
+  /**
+   * Handle basic communication 'toMain' messages
+   * @param {Object} message - The IPC message
+   * @returns {Object} - The response message
+   */
+  'toMain': async (message) => {
+    try {
+      logger.info('Received toMain message from renderer:', message);
+
+      // Get the sender window
+      const senderWindow = BrowserWindow.fromWebContents(message.sender);
+      if (!senderWindow || senderWindow.isDestroyed()) {
+        throw new Error('Sender window not found or destroyed');
+      }
+
+      // Send a response back on the fromMain channel
+      senderWindow.webContents.send('fromMain', 'Message received by main process: ' + message);
+
+      return createSuccessResponse(message, {
+        received: true,
+        timestamp: new Date().toISOString()
       });
+    } catch (error) {
+      logger.error('Error handling toMain message', error);
+      return createErrorResponse(message, error.message);
     }
   },
 

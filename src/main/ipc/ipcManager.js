@@ -328,6 +328,17 @@ export function initialize() {
     logger[level](text, meta);
   });
 
+  // Add a direct listener for the toMain channel
+  ipcMain.on('toMain', (event, message) => {
+    log.info('Received direct toMain message:', message);
+
+    // Send a response back on the fromMain channel
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window && !window.isDestroyed()) {
+      window.webContents.send('fromMain', `Response from main process: ${message}`);
+    }
+  });
+
   log.info('IPC manager initialized');
 }
 

@@ -12,6 +12,7 @@ import windowManager from './main/windows/windowManager.js';
 import ipcManager from './main/ipc/ipcManager.js';
 import stateStore from './main/state/store.js';
 import logger from './utils/logger/index.js';
+import keyboardShortcutManager from './main/windows/KeyboardShortcutManager.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (electronSquirrelStartup) {
@@ -20,6 +21,11 @@ if (electronSquirrelStartup) {
 
 // Create a logger for the main process
 const log = logger.createLogger('Main');
+
+// Set environment indicator for development shortcuts
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_ENV = 'development';
+}
 
 /**
  * Initialize the application
@@ -37,9 +43,11 @@ function initializeApp() {
   stateStore.setState('app', 'isReady', true);
 
   // Create the main application window
-  windowManager.createMainWindow();
+  const mainWindow = windowManager.createMainWindow();
 
   log.info('Application initialized');
+
+  return mainWindow;
 }
 
 /**
@@ -47,6 +55,9 @@ function initializeApp() {
  */
 function cleanupApp() {
   log.info('Cleaning up application resources');
+
+  // Unregister keyboard shortcuts
+  keyboardShortcutManager.unregisterShortcuts();
 
   // Shutdown the state store
   stateStore.shutdown();
@@ -95,6 +106,11 @@ function setupAppLifecycle() {
     // In a production app, you might want to log this to a file
     // and potentially restart the application
   });
+
+  // Handle any unhandled promise rejections
+  process.on('unhandledRejection', (reason, promise) => {
+    log.error('Unhandled promise rejection:', reason);
+  });
 }
 
 // Set up the application lifecycle
@@ -103,4 +119,4 @@ setupAppLifecycle();
 // Log startup information
 log.info(`Starting application ${app.getName()} v${app.getVersion()}`);
 log.info(`Electron v${process.versions.electron}, Node.js ${process.versions.node}, Chrome v${process.versions.chrome}`);
-log.info(`Platform: ${process.platform}, Arch: ${process.arch}`);
+log.info(`Platform: ${process.platform}, Arch: ${process.arch}, Node.js Environment: ${process.env.NODE_ENV || 'production'}`);

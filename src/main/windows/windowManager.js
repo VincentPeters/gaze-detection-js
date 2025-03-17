@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import isDev from 'electron-is-dev';
 import logger from '../../utils/logger/index.js';
 import { createNotificationMessage } from '../../shared/ipc/message.js';
+import MainWindow from './MainWindow.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -19,8 +20,13 @@ const __dirname = path.dirname(__filename);
 // Create a logger for the window manager
 const log = logger.createLogger('WindowManager');
 
+// Get the preload script path - use the CommonJS version
+const preloadPath = path.join(path.dirname(path.dirname(__dirname)), 'preload.cjs');
+
 // Store references to all windows
 const windows = new Map();
+// Store instance of main window
+const mainWindow = new MainWindow();
 
 // Window types
 const WINDOW_TYPES = {
@@ -57,70 +63,18 @@ export async function createWindow(type, options = {}) {
  * @returns {BrowserWindow} The created window
  */
 export function createMainWindow(options = {}) {
-  // Don't create a new window if one already exists
-  if (windows.has(WINDOW_TYPES.MAIN)) {
-    const mainWindow = windows.get(WINDOW_TYPES.MAIN);
-    if (!mainWindow.isDestroyed()) {
-      mainWindow.focus();
-      return mainWindow;
-    }
-  }
-
-  log.info('Creating main window');
-
-  // Create the browser window
-  const mainWindow = new BrowserWindow({
-    width: options.width || 800,
-    height: options.height || 600,
-    title: options.title || 'Gaze Detection',
-    webPreferences: {
-      // Path to the preload script
-      preload: path.join(path.dirname(path.dirname(__dirname)), 'preload.js'),
-      // Security settings
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: true,
-      // Disable remote module
-      enableRemoteModule: false,
-    },
-  });
-
-  // Load the app
-  if (isDev) {
-    // In development, load from Vite dev server
-    mainWindow.loadURL('http://localhost:5173');
-    // Open DevTools in development
-    //mainWindow.webContents.openDevTools();
-    log.info('Loaded main window from dev server');
-  } else {
-    // In production, load the built HTML file
-    mainWindow.loadFile(path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'dist/index.html'));
-    log.info('Loaded main window from production build');
-  }
-
-  // Handle window close
-  mainWindow.on('closed', () => {
-    log.info('Main window closed');
-    windows.delete(WINDOW_TYPES.MAIN);
-
-    // Notify any listeners that the main window was closed
-    broadcastWindowEvent('window:closed', {
-      type: WINDOW_TYPES.MAIN,
-      id: mainWindow.id
-    });
-  });
+  // Use the MainWindow class to create or retrieve the main window
+  const window = mainWindow.create();
 
   // Store the window reference
-  windows.set(WINDOW_TYPES.MAIN, mainWindow);
+  windows.set(WINDOW_TYPES.MAIN, window);
 
-  // Notify any listeners that the main window was created
-  broadcastWindowEvent('window:created', {
-    type: WINDOW_TYPES.MAIN,
-    id: mainWindow.id
-  });
+  // Set up window ID for tracking
+  window.windowId = WINDOW_TYPES.MAIN;
 
-  log.info(`Main window created with ID: ${mainWindow.id}`);
-  return mainWindow;
+  log.info('Main window created and registered');
+
+  return window;
 }
 
 /**
@@ -143,7 +97,7 @@ export function createFacePanelWindow(options = {}) {
     y: options.y || (50 + (id % 3) * 350), // Stack panels vertically
     title: options.title || `Face Panel ${id}`,
     webPreferences: {
-      preload: path.join(path.dirname(path.dirname(__dirname)), 'preload.js'),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -221,7 +175,7 @@ export function createSettingsWindow(options = {}) {
     height: options.height || 500,
     title: options.title || 'Settings',
     webPreferences: {
-      preload: path.join(path.dirname(path.dirname(__dirname)), 'preload.js'),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
