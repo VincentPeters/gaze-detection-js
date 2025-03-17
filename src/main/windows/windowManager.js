@@ -331,6 +331,311 @@ function broadcastWindowEvent(channel, data) {
   }
 }
 
+/**
+ * Focus a window by ID
+ * @param {number} id - The window ID
+ * @returns {boolean} Whether the window was focused
+ */
+export function focusWindow(id) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    if (window.isMinimized()) {
+      window.restore();
+    }
+    window.focus();
+
+    log.info(`Window focused: ${id}`);
+    return true;
+  }
+  log.warn(`Cannot focus window, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Minimize a window by ID
+ * @param {number} id - The window ID
+ * @returns {boolean} Whether the window was minimized
+ */
+export function minimizeWindow(id) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    window.minimize();
+
+    log.info(`Window minimized: ${id}`);
+    return true;
+  }
+  log.warn(`Cannot minimize window, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Maximize a window by ID
+ * @param {number} id - The window ID
+ * @returns {boolean} Whether the window was maximized
+ */
+export function maximizeWindow(id) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    window.maximize();
+
+    log.info(`Window maximized: ${id}`);
+    return true;
+  }
+  log.warn(`Cannot maximize window, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Restore a window by ID
+ * @param {number} id - The window ID
+ * @returns {boolean} Whether the window was restored
+ */
+export function restoreWindow(id) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    window.restore();
+
+    log.info(`Window restored: ${id}`);
+    return true;
+  }
+  log.warn(`Cannot restore window, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Set a window's position
+ * @param {number} id - The window ID
+ * @param {number} x - The x position
+ * @param {number} y - The y position
+ * @returns {boolean} Whether the window position was set
+ */
+export function setWindowPosition(id, x, y) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    window.setPosition(x, y);
+
+    log.info(`Window position set: ${id}, x: ${x}, y: ${y}`);
+    return true;
+  }
+  log.warn(`Cannot set window position, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Set a window's size
+ * @param {number} id - The window ID
+ * @param {number} width - The window width
+ * @param {number} height - The window height
+ * @returns {boolean} Whether the window size was set
+ */
+export function setWindowSize(id, width, height) {
+  const window = getWindowById(id);
+  if (window && !window.isDestroyed()) {
+    window.setSize(width, height);
+
+    log.info(`Window size set: ${id}, width: ${width}, height: ${height}`);
+    return true;
+  }
+  log.warn(`Cannot set window size, not found or destroyed: ${id}`);
+  return false;
+}
+
+/**
+ * Arrange face panel windows in a grid layout
+ * @param {Object} options - Layout options
+ * @param {number} options.maxPerRow - Maximum windows per row
+ * @param {number} options.spacing - Spacing between windows
+ * @param {number} options.width - Width of each window
+ * @param {number} options.height - Height of each window
+ * @returns {boolean} Whether the layout was applied
+ */
+export function arrangeInGrid(options = {}) {
+  const facePanels = getFacePanelWindows();
+  if (facePanels.length === 0) {
+    log.warn('Cannot arrange grid layout, no face panels found');
+    return false;
+  }
+
+  // Default options
+  const maxPerRow = options.maxPerRow || 3;
+  const spacing = options.spacing || 20;
+  const width = options.width || 300;
+  const height = options.height || 300;
+
+  // Get primary display dimensions
+  const { width: displayWidth } = screen.getPrimaryDisplay().workAreaSize;
+
+  // Calculate starting position (right side of screen)
+  const startX = displayWidth - (width * Math.min(maxPerRow, facePanels.length)) - spacing;
+  const startY = 50; // Start from top with some margin
+
+  // Arrange windows in grid
+  facePanels.forEach((window, index) => {
+    const row = Math.floor(index / maxPerRow);
+    const col = index % maxPerRow;
+
+    const x = startX + (col * (width + spacing));
+    const y = startY + (row * (height + spacing));
+
+    window.setBounds({
+      x,
+      y,
+      width,
+      height
+    });
+  });
+
+  log.info(`Arranged ${facePanels.length} face panels in grid layout`);
+
+  // Notify about layout change
+  broadcastWindowEvent('window:layout', {
+    type: 'grid',
+    count: facePanels.length
+  });
+
+  return true;
+}
+
+/**
+ * Arrange face panel windows in a vertical stack
+ * @param {Object} options - Layout options
+ * @param {number} options.spacing - Spacing between windows
+ * @param {number} options.width - Width of each window
+ * @param {number} options.height - Height of each window
+ * @returns {boolean} Whether the layout was applied
+ */
+export function arrangeInVerticalStack(options = {}) {
+  const facePanels = getFacePanelWindows();
+  if (facePanels.length === 0) {
+    log.warn('Cannot arrange vertical stack, no face panels found');
+    return false;
+  }
+
+  // Default options
+  const spacing = options.spacing || 20;
+  const width = options.width || 300;
+  const height = options.height || 300;
+
+  // Get primary display dimensions
+  const { width: displayWidth } = screen.getPrimaryDisplay().workAreaSize;
+
+  // Calculate starting position (right side of screen)
+  const x = displayWidth - width - spacing;
+  const startY = 50; // Start from top with some margin
+
+  // Arrange windows in vertical stack
+  facePanels.forEach((window, index) => {
+    const y = startY + (index * (height + spacing));
+
+    window.setBounds({
+      x,
+      y,
+      width,
+      height
+    });
+  });
+
+  log.info(`Arranged ${facePanels.length} face panels in vertical stack`);
+
+  // Notify about layout change
+  broadcastWindowEvent('window:layout', {
+    type: 'vertical-stack',
+    count: facePanels.length
+  });
+
+  return true;
+}
+
+/**
+ * Arrange face panel windows in a horizontal row
+ * @param {Object} options - Layout options
+ * @param {number} options.spacing - Spacing between windows
+ * @param {number} options.width - Width of each window
+ * @param {number} options.height - Height of each window
+ * @returns {boolean} Whether the layout was applied
+ */
+export function arrangeInHorizontalRow(options = {}) {
+  const facePanels = getFacePanelWindows();
+  if (facePanels.length === 0) {
+    log.warn('Cannot arrange horizontal row, no face panels found');
+    return false;
+  }
+
+  // Default options
+  const spacing = options.spacing || 20;
+  const width = options.width || 300;
+  const height = options.height || 300;
+
+  // Get primary display dimensions
+  const { width: displayWidth } = screen.getPrimaryDisplay().workAreaSize;
+
+  // Calculate total width needed
+  const totalWidth = facePanels.length * width + (facePanels.length - 1) * spacing;
+
+  // Calculate starting position (centered)
+  const startX = Math.max(0, (displayWidth - totalWidth) / 2);
+  const y = 50; // Fixed Y position
+
+  // Arrange windows in horizontal row
+  facePanels.forEach((window, index) => {
+    const x = startX + (index * (width + spacing));
+
+    window.setBounds({
+      x,
+      y,
+      width,
+      height
+    });
+  });
+
+  log.info(`Arranged ${facePanels.length} face panels in horizontal row`);
+
+  // Notify about layout change
+  broadcastWindowEvent('window:layout', {
+    type: 'horizontal-row',
+    count: facePanels.length
+  });
+
+  return true;
+}
+
+/**
+ * Minimize all windows except the one with the given ID
+ * @param {number} exceptId - The ID of the window to keep unminimized
+ * @returns {number} The number of windows minimized
+ */
+export function minimizeAllExcept(exceptId) {
+  let count = 0;
+
+  for (const window of windows.values()) {
+    if (window && !window.isDestroyed() && window.id !== exceptId && !window.isMinimized()) {
+      window.minimize();
+      count++;
+    }
+  }
+
+  log.info(`Minimized ${count} windows, keeping window ${exceptId} active`);
+  return count;
+}
+
+/**
+ * Bring all windows to front
+ * @returns {number} The number of windows brought to front
+ */
+export function bringAllToFront() {
+  let count = 0;
+
+  for (const window of windows.values()) {
+    if (window && !window.isDestroyed()) {
+      window.moveTop();
+      count++;
+    }
+  }
+
+  log.info(`Brought ${count} windows to front`);
+  return count;
+}
+
 export default {
   createWindow,
   createMainWindow,
@@ -342,5 +647,16 @@ export default {
   getFacePanelWindows,
   getAllWindows,
   closeAllWindows,
-  WINDOW_TYPES
+  WINDOW_TYPES,
+  focusWindow,
+  minimizeWindow,
+  maximizeWindow,
+  restoreWindow,
+  setWindowPosition,
+  setWindowSize,
+  arrangeInGrid,
+  arrangeInVerticalStack,
+  arrangeInHorizontalRow,
+  minimizeAllExcept,
+  bringAllToFront
 };
