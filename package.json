@@ -8,13 +8,6 @@
   "scripts": {
     "start": "electron-forge start",
     "dev": "vite",
-    "electron-dev": "node electron-dev.js",
-    "build": "vite build && npm run copy-prod-html",
-    "copy-prod-html": "node -e \"import('fs').then(fs => fs.copyFileSync('dist/index.prod.html', 'dist/index.html'))\"",
-    "preview": "vite preview",
-    "package": "npm run build && electron-forge package",
-    "make": "npm run build && electron-forge make",
-    "publish": "npm run build && electron-forge publish",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src/",
     "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx src/ --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",

@@ -3,7 +3,7 @@
 ## 1. Objective and Scope
 - **Primary Goal:** Define and implement the core application architecture, project structure, and communication patterns between different components of the eye contact detection system.
 - **User/System Value:** Provides a solid foundation that enables modular development, maintainability, and scalability of the application.
-- **Feature Boundaries:** 
+- **Feature Boundaries:**
   - In scope: Project directory structure, architectural patterns, module organization, inter-process communication, state management approach.
   - Out of scope: Specific implementation details of individual features, UI design, business logic implementation.
 - **Relationship to Project Goals:** A well-designed architecture ensures that the JavaScript refactoring will be maintainable, extensible, and perform efficiently while supporting all the required functionality of the original Python application.
@@ -63,12 +63,12 @@
 ## 4. Implementation Tasks
 Break down into outcome-oriented tasks that describe WHAT to accomplish, not HOW:
 
-### Task MS2-1: Project Directory Structure Definition
+### Task MS2-1: Project Directory Structure Definition (DONE)
 **Objective:** Define and establish a clear, organized directory structure for the application code.
 
 **Full details in task file:** `/docs/features/MS2/feature_task_1.md`
 
-### Task MS2-2: Main and Renderer Process Architecture
+### Task MS2-2: Main and Renderer Process Architecture (DONE)
 **Objective:** Define the architecture and responsibility boundaries between Electron's main process and renderer processes.
 
 **Full details in task file:** `/docs/features/MS2/feature_task_2.md`
