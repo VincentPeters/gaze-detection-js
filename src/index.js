@@ -39,6 +39,9 @@ function initializeApp() {
   // Initialize the state store
   stateStore.initialize();
 
+  // Initialize the window manager (which initializes WindowStateManager)
+  windowManager.initialize();
+
   // Set application as ready
   stateStore.setState('app', 'isReady', true);
 
@@ -58,6 +61,9 @@ function cleanupApp() {
 
   // Unregister keyboard shortcuts
   keyboardShortcutManager.unregisterShortcuts();
+
+  // Shutdown the window manager
+  windowManager.shutdown();
 
   // Shutdown the state store
   stateStore.shutdown();

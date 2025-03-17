@@ -12,6 +12,7 @@ import isDev from 'electron-is-dev';
 import logger from '../../utils/logger/index.js';
 import stateStore from '../state/store.js';
 import keyboardShortcutManager from './KeyboardShortcutManager.js';
+import windowStateManager from './WindowStateManager.js';
 import { URL } from 'url';
 
 // Get __dirname equivalent in ES modules
@@ -24,60 +25,7 @@ const log = logger.createLogger('MainWindow');
 class MainWindow {
   constructor() {
     this.window = null;
-    this.windowState = this.loadWindowState();
-  }
-
-  /**
-   * Load saved window state from state store
-   * @returns {Object} Window state (position, size)
-   */
-  loadWindowState() {
-    try {
-      const savedState = stateStore.getState('mainWindow') || {};
-      return {
-        width: savedState.width || 1024,
-        height: savedState.height || 768,
-        x: savedState.x,
-        y: savedState.y,
-        isMaximized: savedState.isMaximized || false
-      };
-    } catch (error) {
-      log.error('Failed to load window state:', error);
-      return {
-        width: 1024,
-        height: 768,
-        isMaximized: false
-      };
-    }
-  }
-
-  /**
-   * Save the current window state to state store
-   */
-  saveWindowState() {
-    if (!this.window || this.window.isDestroyed()) return;
-
-    try {
-      // Don't overwrite position when window is minimized
-      if (this.window.isMinimized()) return;
-
-      const isMaximized = this.window.isMaximized();
-      const bounds = this.window.getBounds();
-
-      stateStore.setState('mainWindow', 'width', bounds.width);
-      stateStore.setState('mainWindow', 'height', bounds.height);
-      stateStore.setState('mainWindow', 'isMaximized', isMaximized);
-
-      // Only save position if window is not maximized
-      if (!isMaximized) {
-        stateStore.setState('mainWindow', 'x', bounds.x);
-        stateStore.setState('mainWindow', 'y', bounds.y);
-      }
-
-      log.debug('Saved window state');
-    } catch (error) {
-      log.error('Failed to save window state:', error);
-    }
+    // Note: actual window state will be managed by WindowStateManager
   }
 
   /**
@@ -92,14 +40,17 @@ class MainWindow {
 
     log.info('Creating main window');
 
+    // Get window state from WindowStateManager
+    const windowState = windowStateManager.getState('main', 'main');
+
     // Get the preload script path - use the CommonJS version
     const preloadPath = path.join(path.dirname(path.dirname(__dirname)), 'preload.cjs');
     log.info(`Using preload script at: ${preloadPath}`);
 
     // Configure window options
     const windowOptions = {
-      width: this.windowState.width,
-      height: this.windowState.height,
+      width: windowState.width,
+      height: windowState.height,
       minWidth: 800,
       minHeight: 600,
       show: false, // We'll show it once it's ready
@@ -123,9 +74,9 @@ class MainWindow {
     };
 
     // Set initial position if saved
-    if (this.windowState.x !== undefined && this.windowState.y !== undefined) {
-      windowOptions.x = this.windowState.x;
-      windowOptions.y = this.windowState.y;
+    if (windowState.x !== undefined && windowState.y !== undefined) {
+      windowOptions.x = windowState.x;
+      windowOptions.y = windowState.y;
     } else {
       // Center window if no saved position
       windowOptions.center = true;
@@ -133,6 +84,10 @@ class MainWindow {
 
     // Create the browser window
     this.window = new BrowserWindow(windowOptions);
+
+    // Let WindowStateManager track this window
+    // Note: window manager will also do this, but we want to ensure it's tracked here too
+    windowStateManager.trackWindow(this.window, 'main', 'main');
 
     // Add event listeners
     this.setupEventListeners();
@@ -147,7 +102,7 @@ class MainWindow {
     this.loadApp();
 
     // If window should be maximized (from saved state)
-    if (this.windowState.isMaximized) {
+    if (windowState.isMaximized) {
       this.window.maximize();
     }
 
@@ -166,15 +121,8 @@ class MainWindow {
   setupEventListeners() {
     if (!this.window) return;
 
-    // Save window state when it's resized or moved
-    this.window.on('resize', () => this.saveWindowState());
-    this.window.on('move', () => this.saveWindowState());
-
     // Handle window close event
     this.window.on('close', (event) => {
-      // Save window state before closing
-      this.saveWindowState();
-
       // Example: You could intercept the close event if needed
       // if (needsConfirmation) {
       //   event.preventDefault();
@@ -259,16 +207,7 @@ class MainWindow {
           { type: 'separator' },
           { role: 'cut' },
           { role: 'copy' },
-          { role: 'paste' },
-          ...(process.platform === 'darwin' ? [
-            { role: 'pasteAndMatchStyle' },
-            { role: 'delete' },
-            { role: 'selectAll' },
-          ] : [
-            { role: 'delete' },
-            { type: 'separator' },
-            { role: 'selectAll' }
-          ])
+          { role: 'paste' }
         ]
       },
       // View menu
@@ -295,6 +234,8 @@ class MainWindow {
           ...(process.platform === 'darwin' ? [
             { type: 'separator' },
             { role: 'front' },
+            { type: 'separator' },
+            { role: 'window' }
           ] : [
             { role: 'close' }
           ])
@@ -307,24 +248,29 @@ class MainWindow {
           {
             label: 'About',
             click: () => {
+              // Emit event to show about dialog
               if (this.window && !this.window.isDestroyed()) {
-                this.window.webContents.send('menu:about');
+                this.window.webContents.send('menu:open-about');
               }
             }
           },
-          ...(isDev ? [{ type: 'separator' },
-          {
-            label: 'Developer Tools',
-            click: () => {
-              if (this.window && !this.window.isDestroyed()) {
-                this.window.webContents.toggleDevTools();
+          ...(isDev ? [
+            { type: 'separator' },
+            {
+              label: 'Toggle Developer Tools',
+              accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+              click: () => {
+                if (this.window && !this.window.isDestroyed()) {
+                  this.window.webContents.toggleDevTools();
+                }
               }
             }
-          }] : [])
+          ] : [])
         ]
       }
     ];
 
+    // Build the menu and apply it
     const menu = Menu.buildFromTemplate(menuTemplate);
     Menu.setApplicationMenu(menu);
   }
@@ -333,37 +279,33 @@ class MainWindow {
    * Register keyboard shortcuts
    */
   registerKeyboardShortcuts() {
-    if (!this.window) return;
-
-    // Register application-wide shortcuts
+    // Use the correct method name from KeyboardShortcutManager
     keyboardShortcutManager.registerShortcuts(this.window);
   }
 
   /**
-   * Load the application in the window
+   * Load the application content
    */
   loadApp() {
-    if (!this.window || this.window.isDestroyed()) return;
-
+    // Load the app from the appropriate location
     if (isDev) {
       // In development, load from Vite dev server
       this.window.loadURL('http://localhost:5173');
-      // Open DevTools in development
-      if (isDev) {
-        this.window.webContents.openDevTools();
-      }
+      // Open developer tools
+      this.window.webContents.openDevTools();
       log.info('Loaded main window from dev server');
     } else {
       // In production, load the built HTML file
-      const distPath = path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'dist/index.html');
-      this.window.loadFile(distPath);
+      this.window.loadFile(
+        path.join(path.dirname(path.dirname(path.dirname(__dirname))), 'dist/index.html')
+      );
       log.info('Loaded main window from production build');
     }
   }
 
   /**
-   * Get the BrowserWindow instance
-   * @returns {BrowserWindow|null} The window instance or null if not created
+   * Get the window
+   * @returns {BrowserWindow|null} The window or null if it doesn't exist
    */
   getWindow() {
     return this.window;

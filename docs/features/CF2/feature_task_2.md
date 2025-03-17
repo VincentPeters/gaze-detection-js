@@ -1,7 +1,7 @@
 # Task CF2-2: Facial Landmark Extraction
 
 ## Objective
-Extract detailed facial landmarks from detected faces, with particular focus on eye regions, providing the necessary anatomical reference points for subsequent eye contact analysis.
+Extract detailed facial landmarks from detected faces, with particular focus on eye regions, providing essential feature points for accurate eye contact detection and analysis.
 
 ## Starting Context
 - **System State:** 
@@ -9,130 +9,130 @@ Extract detailed facial landmarks from detected faces, with particular focus on 
   - Project structure and architecture have been defined (MS2)
   - Basic window management system is in place (MS3)
   - Camera integration and video feed are functional (CF1)
-  - Face detection model integration is complete (CF2-1)
+  - Face detection model integration exists (CF2-1)
   - No facial landmark extraction exists yet
 - **Available Resources:** 
-  - face-api.js landmark detection capabilities
+  - face-api.js library and landmark detection capabilities
   - Face detection results from previous task
-  - Project architecture documentation
-  - Original Python implementation for reference
+  - Video frame processing pipeline
+  - Project architecture definitions
 - **Constraints:** 
-  - Must accurately extract facial landmarks, especially around eyes
   - Must operate efficiently for real-time processing
-  - Must produce consistent results across different face orientations
-  - Must integrate with existing face detection process
-  - Must handle varying quality of face detection results
+  - Must extract landmarks with sufficient accuracy for eye analysis
+  - Must work with various face angles and expressions
+  - Must integrate with existing face detection system
+  - Must prioritize eye region accuracy
 
 ## Expected Outcome
-- **Functional Result:** A reliable system for extracting facial landmarks from detected faces, with particular attention to eye regions necessary for eye contact detection.
+- **Functional Result:** A reliable facial landmark extraction system that accurately identifies key facial features, particularly eye regions, from detected faces.
 - **System Changes:** 
-  - Facial landmark model integration
-  - Landmark extraction process implementation
-  - Eye region specific landmark processing
+  - Facial landmark model integration and initialization
+  - Landmark extraction implementation
+  - Eye region landmark specialization
   - Landmark data structure definition
-  - Integration with face detection pipeline
+  - Integration with face detection results
 - **Observable Indicators:** 
   - Facial landmarks are accurately extracted from detected faces
-  - Eye region landmarks are particularly precise
-  - Extraction works consistently across different face orientations
-  - Process performs efficiently as part of real-time pipeline
-  - Landmark data is structured appropriately for eye contact analysis
+  - Eye regions are precisely mapped with appropriate detail
+  - Landmark extraction performs efficiently in real-time
+  - Results are structured for subsequent eye contact analysis
+  - Extraction quality is consistent across various face orientations
 
 ## Interaction Specification
 - **Input Handling:** 
-  - Face detection results with bounding boxes
-  - Video frame data for landmark detection
-  - Landmark model configuration parameters
-  - Hardware capability information
-  - Quality metrics from face detection
+  - Face detection results (bounding boxes)
+  - Video frames containing detected faces
+  - Landmark extraction configuration parameters
+  - Face orientation and expression variations
+  - Resource availability information
 - **Output Generation:** 
-  - Complete facial landmark sets for each face
-  - Enhanced eye region landmark data
-  - Landmark confidence metrics
-  - Performance statistics for monitoring
-  - Error and quality notifications
+  - Complete facial landmark sets
+  - Specialized eye region landmarks
+  - Landmark confidence/quality metrics
+  - Performance and timing information
+  - Error and status notifications
 - **Error Handling:** 
-  - Poor quality face detection results
   - Landmark detection failures
-  - Partial landmark detection results
+  - Low-confidence landmark points
   - Performance degradation detection
-  - Recovery strategies for challenging cases
+  - Recovery strategies for extraction failures
+  - Handling of challenging face orientations
 - **State Changes:** 
-  - From face detection result to landmark extraction
-  - From basic landmarks to enhanced eye region data
-  - Between different landmark model configurations
-  - During adaptation to detection quality
-  - When handling challenging face orientations
+  - From face detection to landmark extraction
+  - From raw landmarks to processed feature points
+  - From general landmarks to eye-region specialization
+  - During error recovery processes
+  - When adapting to different face orientations
 
 ## Verification Approach
 - **Manual Verification Steps:** 
-  - Verify landmark accuracy with live video
-  - Test with different face positions and angles
-  - Check landmark consistency during movement
-  - Confirm special attention to eye region landmarks
-  - Test performance as part of complete pipeline
+  - Verify landmark accuracy on various face types
+  - Check eye region landmark precision
+  - Test with different face angles and expressions
+  - Confirm performance is suitable for real-time use
+  - Verify extraction quality in different lighting conditions
 - **Automated Test Approach:** 
-  - Create tests with sample images of known facial landmarks
-  - Implement accuracy measurement methods
-  - Test landmark stability across frames
-  - Verify eye region landmark precision
-  - Test handling of challenging face orientations
+  - Create tests for landmark extraction accuracy
+  - Implement tests with sample face images
+  - Test performance benchmarks
+  - Verify integration with face detection
+  - Test error handling and recovery scenarios
 - **Integration Check Points:** 
-  - Ensure proper integration with face detection results
-  - Verify appropriate data structures for subsequent analysis
-  - Check performance impact on overall pipeline
-  - Confirm quality metrics propagation
-  - Test coordination with face region preparation
+  - Ensure proper integration with face detection system
+  - Verify compatibility with application architecture
+  - Check resource usage patterns
+  - Confirm output format meets requirements for eye contact detection
+  - Test extraction quality across various face conditions
 
 ## Decision Guidance
 - **Key Decisions:** 
-  - Landmark model selection and configuration
-  - Eye region enhancement approach
-  - Landmark data structure design
-  - Performance optimization strategy
-  - Quality metric definitions and thresholds
+  - Landmark model selection (68-point, 5-point, or custom)
+  - Eye region landmark density approach
+  - Landmark confidence threshold strategy
+  - Processing optimization approach
+  - Eye region specialization technique
 - **Consideration Factors:** 
-  - Landmark accuracy requirements for eye contact detection
-  - Performance implications of detailed landmark extraction
-  - Memory usage patterns
-  - Consistency across different face types and orientations
-  - Integration with subsequent processing steps
+  - Extraction accuracy requirements
+  - Performance impact on overall application
+  - Memory usage considerations
+  - Compatibility with eye contact detection needs
+  - User experience expectations
 - **Tradeoff Analysis:** 
-  - Comprehensive vs. focused landmark sets
-  - High-precision vs. high-performance extraction
-  - Complex vs. simple eye region modeling
-  - Extensive vs. minimal quality metrics
-  - Adaptive vs. fixed landmark processing
+  - Dense vs. sparse landmark models
+  - High vs. low confidence thresholds
+  - Specialized vs. general landmark extraction
+  - Computationally intensive vs. lightweight approaches
+  - Advanced vs. basic eye region mapping
 
 ## Dependencies
 - **Preceding Tasks:** 
   - MS1: Environment Setup (all subtasks)
-  - MS2-3: Inter-Process Communication Framework
-  - CF1-3: Frame Processing Pipeline
+  - MS2: Project Structure & Architecture
+  - CF1: Camera Integration & Video Feed
   - CF2-1: Face Detection Model Integration
 - **Following Tasks:** 
   - CF2-3: Detection Parameter Management
   - CF2-4: Face Region Preparation
-  - CF2-5: Performance Optimization
   - CF3: Eye Contact Model Conversion
+  - EN2-4: Detection Visualization Overlays
 - **External Dependencies:** 
   - face-api.js landmark detection capabilities
-  - Pre-trained landmark models
-  - System processing resources
-  - Face detection quality
-  - Video frame resolution and quality
+  - TensorFlow.js framework
+  - Pre-trained facial landmark models
+  - Face detection results structure
+  - Browser/Electron rendering capabilities
 
 ## Effort Estimation
 - **Complexity Assessment:** High
 - **Skill Areas:** 
-  - Facial anatomy and landmark identification
-  - Computer vision techniques
-  - Machine learning model utilization
-  - Real-time processing optimization
-  - Data structure design
+  - Facial landmark analysis
+  - Computer vision concepts
+  - JavaScript/TypeScript development
+  - Performance optimization
+  - Feature extraction techniques
 - **Risk Factors:** 
-  - Landmark accuracy challenges in difficult conditions
-  - Performance impacts on overall pipeline
-  - Consistency across different face types
-  - Eye region precision requirements
-  - Integration with subsequent eye contact analysis
+  - Landmark accuracy with various face orientations
+  - Performance challenges with detailed landmark extraction
+  - Eye region specialization complexity
+  - Integration with face detection variations
+  - Real-time performance constraints

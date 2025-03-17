@@ -12,6 +12,7 @@ import isDev from 'electron-is-dev';
 import logger from '../../utils/logger/index.js';
 import { createNotificationMessage } from '../../shared/ipc/message.js';
 import MainWindow from './MainWindow.js';
+import windowStateManager from './WindowStateManager.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,18 @@ const WINDOW_TYPES = {
   FACE_PANEL: 'face-panel',
   SETTINGS: 'settings'
 };
+
+/**
+ * Initialize the window manager
+ */
+export function initialize() {
+  log.info('Initializing window manager');
+
+  // Initialize the window state manager
+  windowStateManager.initialize();
+
+  log.info('Window manager initialized');
+}
 
 /**
  * Create a window with the specified type and options
@@ -72,6 +85,9 @@ export function createMainWindow(options = {}) {
   // Set up window ID for tracking
   window.windowId = WINDOW_TYPES.MAIN;
 
+  // Track window state with the window state manager
+  windowStateManager.trackWindow(window, WINDOW_TYPES.MAIN, WINDOW_TYPES.MAIN);
+
   log.info('Main window created and registered');
 
   return window;
@@ -84,17 +100,21 @@ export function createMainWindow(options = {}) {
  */
 export function createFacePanelWindow(options = {}) {
   const id = options.id || Date.now();
+  const windowId = `${WINDOW_TYPES.FACE_PANEL}-${id}`;
   log.info(`Creating face panel window with ID: ${id}`);
+
+  // Get window state from the window state manager
+  const windowState = windowStateManager.getState(windowId, WINDOW_TYPES.FACE_PANEL);
 
   // Get the primary display dimensions
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   // Create a smaller window for the face panel
   const facePanelWindow = new BrowserWindow({
-    width: options.width || 300,
-    height: options.height || 300,
-    x: options.x || (width - 350), // Position near the right edge
-    y: options.y || (50 + (id % 3) * 350), // Stack panels vertically
+    width: options.width || windowState.width,
+    height: options.height || windowState.height,
+    x: options.x || windowState.x || (width - 350), // Position near the right edge if no saved position
+    y: options.y || windowState.y || (50 + (id % 3) * 350), // Stack panels vertically if no saved position
     title: options.title || `Face Panel ${id}`,
     webPreferences: {
       preload: preloadPath,
@@ -110,6 +130,9 @@ export function createFacePanelWindow(options = {}) {
     // No menu bar
     autoHideMenuBar: true,
   });
+
+  // Track window state with the window state manager
+  windowStateManager.trackWindow(facePanelWindow, windowId, WINDOW_TYPES.FACE_PANEL);
 
   // Load the face panel content
   if (isDev) {
@@ -128,7 +151,10 @@ export function createFacePanelWindow(options = {}) {
   // Handle window close
   facePanelWindow.on('closed', () => {
     log.info(`Face panel window closed with ID: ${id}`);
-    windows.delete(`${WINDOW_TYPES.FACE_PANEL}-${id}`);
+    windows.delete(windowId);
+
+    // Untrack the window
+    windowStateManager.untrackWindow(windowId);
 
     // Notify any listeners that the face panel window was closed
     broadcastWindowEvent('window:closed', {
@@ -139,7 +165,7 @@ export function createFacePanelWindow(options = {}) {
   });
 
   // Store the window reference with its ID
-  windows.set(`${WINDOW_TYPES.FACE_PANEL}-${id}`, facePanelWindow);
+  windows.set(windowId, facePanelWindow);
 
   // Notify any listeners that the face panel window was created
   broadcastWindowEvent('window:created', {
@@ -169,10 +195,15 @@ export function createSettingsWindow(options = {}) {
 
   log.info('Creating settings window');
 
+  // Get window state from the window state manager
+  const windowState = windowStateManager.getState(WINDOW_TYPES.SETTINGS, WINDOW_TYPES.SETTINGS);
+
   // Create the browser window
   const settingsWindow = new BrowserWindow({
-    width: options.width || 600,
-    height: options.height || 500,
+    width: options.width || windowState.width,
+    height: options.height || windowState.height,
+    x: options.x || windowState.x,
+    y: options.y || windowState.y,
     title: options.title || 'Settings',
     webPreferences: {
       preload: preloadPath,
@@ -186,6 +217,9 @@ export function createSettingsWindow(options = {}) {
     // Modal dialog
     modal: options.modal !== undefined ? options.modal : true,
   });
+
+  // Track window state with the window state manager
+  windowStateManager.trackWindow(settingsWindow, WINDOW_TYPES.SETTINGS, WINDOW_TYPES.SETTINGS);
 
   // Load the settings content
   if (isDev) {
@@ -205,6 +239,9 @@ export function createSettingsWindow(options = {}) {
   settingsWindow.on('closed', () => {
     log.info('Settings window closed');
     windows.delete(WINDOW_TYPES.SETTINGS);
+
+    // Untrack the window
+    windowStateManager.untrackWindow(WINDOW_TYPES.SETTINGS);
 
     // Notify any listeners that the settings window was closed
     broadcastWindowEvent('window:closed', {
@@ -302,6 +339,21 @@ export function closeAllWindows() {
   windows.clear();
 
   log.info('All windows closed');
+}
+
+/**
+ * Shutdown the window manager
+ */
+export function shutdown() {
+  log.info('Shutting down window manager');
+
+  // Close all windows
+  closeAllWindows();
+
+  // Shutdown the window state manager
+  windowStateManager.shutdown();
+
+  log.info('Window manager shut down');
 }
 
 /**
@@ -637,6 +689,7 @@ export function bringAllToFront() {
 }
 
 export default {
+  initialize,
   createWindow,
   createMainWindow,
   createFacePanelWindow,
@@ -647,6 +700,7 @@ export default {
   getFacePanelWindows,
   getAllWindows,
   closeAllWindows,
+  shutdown,
   WINDOW_TYPES,
   focusWindow,
   minimizeWindow,
