@@ -14,6 +14,7 @@ import { createNotificationMessage } from '../../shared/ipc/message.js';
 import MainWindow from './MainWindow.js';
 import windowStateManager from './WindowStateManager.js';
 import windowCommunicationManager from './WindowCommunicationManager.js';
+import windowEventHandler from './WindowEventHandler.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +46,9 @@ export function initialize() {
 
   // Initialize the window state manager
   windowStateManager.initialize();
+
+  // Initialize the window event handler
+  windowEventHandler.initialize();
 
   log.info('Window manager initialized');
 }
@@ -83,11 +87,12 @@ export function createMainWindow(options = {}) {
   // Store the window reference
   windows.set(WINDOW_TYPES.MAIN, window);
 
-  // Set up window ID for tracking
+  // Set window ID and type for tracking
   window.windowId = WINDOW_TYPES.MAIN;
+  window.windowType = WINDOW_TYPES.MAIN;
 
-  // Add window event listeners
-  setupWindowEventListeners(window);
+  // Register window events
+  windowEventHandler.registerWindowEvents(window, WINDOW_TYPES.MAIN);
 
   // Track window state with the window state manager
   windowStateManager.trackWindow(window, WINDOW_TYPES.MAIN, WINDOW_TYPES.MAIN);
@@ -141,8 +146,13 @@ export function createFacePanelWindow(options = {}) {
     autoHideMenuBar: true,
   });
 
-  // Add window event listeners
-  setupWindowEventListeners(facePanelWindow);
+  // Set window ID and type for tracking
+  facePanelWindow.windowId = windowId;
+  facePanelWindow.windowType = WINDOW_TYPES.FACE_PANEL;
+  facePanelWindow.panelId = id;
+
+  // Register window events
+  windowEventHandler.registerWindowEvents(facePanelWindow, WINDOW_TYPES.FACE_PANEL);
 
   // Track window state with the window state manager
   windowStateManager.trackWindow(facePanelWindow, windowId, WINDOW_TYPES.FACE_PANEL);
@@ -231,8 +241,12 @@ export function createSettingsWindow(options = {}) {
     modal: options.modal !== undefined ? options.modal : true,
   });
 
-  // Add window event listeners
-  setupWindowEventListeners(settingsWindow);
+  // Set window ID and type for tracking
+  settingsWindow.windowId = WINDOW_TYPES.SETTINGS;
+  settingsWindow.windowType = WINDOW_TYPES.SETTINGS;
+
+  // Register window events
+  windowEventHandler.registerWindowEvents(settingsWindow, WINDOW_TYPES.SETTINGS);
 
   // Track window state with the window state manager
   windowStateManager.trackWindow(settingsWindow, WINDOW_TYPES.SETTINGS, WINDOW_TYPES.SETTINGS);
@@ -368,6 +382,9 @@ export function shutdown() {
 
   // Shutdown the window state manager
   windowStateManager.shutdown();
+
+  // Shutdown the window event handler
+  windowEventHandler.shutdown();
 
   log.info('Window manager shut down');
 }
@@ -722,103 +739,12 @@ export function bringAllToFront() {
   return count;
 }
 
-/**
- * Set up event listeners for a window
- * @param {BrowserWindow} window - The window to set up event listeners for
- */
+// Replace the setupWindowEventListeners function with a stub that delegates to WindowEventHandler
 function setupWindowEventListeners(window) {
   if (!window || window.isDestroyed()) return;
 
-  // Focus event
-  window.on('focus', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'focus',
-      windowId: window.id
-    });
-  });
-
-  // Blur event
-  window.on('blur', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'blur',
-      windowId: window.id
-    });
-  });
-
-  // Resize event
-  window.on('resize', () => {
-    const bounds = window.getBounds();
-    broadcastWindowEvent('window:event', {
-      eventType: 'resize',
-      windowId: window.id,
-      data: {
-        width: bounds.width,
-        height: bounds.height
-      }
-    });
-  });
-
-  // Move event
-  window.on('move', () => {
-    const bounds = window.getBounds();
-    broadcastWindowEvent('window:event', {
-      eventType: 'move',
-      windowId: window.id,
-      data: {
-        x: bounds.x,
-        y: bounds.y
-      }
-    });
-  });
-
-  // Maximize event
-  window.on('maximize', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'maximize',
-      windowId: window.id
-    });
-  });
-
-  // Unmaximize event
-  window.on('unmaximize', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'unmaximize',
-      windowId: window.id
-    });
-  });
-
-  // Minimize event
-  window.on('minimize', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'minimize',
-      windowId: window.id
-    });
-  });
-
-  // Restore event
-  window.on('restore', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'restore',
-      windowId: window.id
-    });
-  });
-
-  // Page title updated event
-  window.on('page-title-updated', (event, title) => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'title-change',
-      windowId: window.id,
-      data: { title }
-    });
-  });
-
-  // Window ready-to-show event
-  window.once('ready-to-show', () => {
-    broadcastWindowEvent('window:event', {
-      eventType: 'ready',
-      windowId: window.id
-    });
-  });
+  // Delegate to the window event handler
+  windowEventHandler.registerWindowEvents(window, window.windowType || 'unknown');
 }
 
 export default {

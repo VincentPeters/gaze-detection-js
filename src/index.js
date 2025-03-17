@@ -14,6 +14,9 @@ import stateStore from './main/state/store.js';
 import logger from './utils/logger/index.js';
 import keyboardShortcutManager from './main/windows/KeyboardShortcutManager.js';
 import windowCommunicationManager from './main/windows/WindowCommunicationManager.js';
+import windowEventHandler from './main/windows/WindowEventHandler.js';
+// Import window event handlers to ensure they're registered
+import './main/windows/handlers/index.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (electronSquirrelStartup) {
@@ -39,6 +42,9 @@ function initializeApp() {
 
   // Initialize the state store
   stateStore.initialize();
+
+  // Initialize the window event handler
+  windowEventHandler.initialize();
 
   // Initialize the window manager (which initializes WindowStateManager)
   windowManager.initialize();
@@ -71,6 +77,10 @@ function cleanupApp() {
 
   // Shutdown the window manager
   windowManager.shutdown();
+
+  // WindowEventHandler is already shutdown by windowManager.shutdown()
+  // Don't call it again to avoid duplicate shutdown
+  // windowEventHandler.shutdown();
 
   // Shutdown the state store
   stateStore.shutdown();
@@ -108,8 +118,10 @@ function setupAppLifecycle() {
   });
 
   // Clean up before quitting
-  app.on('before-quit', () => {
+  app.on('before-quit', (event) => {
     log.info('Application quitting');
+    // Set the isQuitting flag to true
+    app.isQuitting = true;
     cleanupApp();
   });
 
