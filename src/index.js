@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
+const isDev = require('electron-is-dev');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -19,11 +20,16 @@ const createWindow = () => {
     },
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
+  // Load the app
+  if (isDev) {
+    // In development, load from Vite dev server
+    mainWindow.loadURL('http://localhost:5173');
+    // Open DevTools
+    // mainWindow.webContents.openDevTools();
+  } else {
+    // In production, load the built HTML file
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 };
 
 // This method will be called when Electron has finished
