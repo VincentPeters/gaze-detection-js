@@ -5,11 +5,16 @@ function App() {
 
   useEffect(() => {
     // Example of IPC communication with Electron main process
-    window.api.receive('fromMain', (data) => {
-      setMessage(data);
-    });
+    if (window.api) {
+      window.api.receive('fromMain', data => {
+        setMessage(data);
+      });
 
-    window.api.send('toMain', 'Hello from React!');
+      window.api.send('toMain', 'Hello from React!');
+    } else {
+      // For testing or non-Electron environments
+      setMessage('Welcome to Gaze Detection');
+    }
   }, []);
 
   return (

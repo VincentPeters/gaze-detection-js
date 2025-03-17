@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "orta.vscode-jest",
+    "ms-vscode.js-debug",
+    "ms-vscode.vscode-js-profile-flame",
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "mikestead.dotenv",
+    "streetsidesoftware.code-spell-checker"
+  ]
+}

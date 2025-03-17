@@ -90,3 +90,10 @@ typings/
 
 # Electron-Forge
 out/
+
+# Jest
+coverage/
+jest-report/
+
+# TypeScript
+dist/
