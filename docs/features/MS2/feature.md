@@ -75,7 +75,10 @@ Establish a framework for communication between main and renderer processes that
 ### Task MS2-4: State Management Architecture (DONE)
 Define the state management approach for the application, including how state is shared between processes.
 
-### Task MS2-5: Build and Packaging Configuration
+### Task MS2-5: Module and Component Organization (DONE)
+Establish patterns for organizing reusable modules and components within the application, creating a consistent structure that promotes code reuse, maintainability, and clear dependencies.
+
+### Task MS2-6: Build and Packaging Configuration
 Set up the build and packaging configuration for the application, including development and production builds
 
 ## 5. Interaction & Behavior Specifications
