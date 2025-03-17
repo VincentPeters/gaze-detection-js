@@ -10,7 +10,7 @@
     "dev": "vite",
     "electron-dev": "node electron-dev.js",
     "build": "vite build && npm run copy-prod-html",
-    "copy-prod-html": "node -e \"require('fs').copyFileSync('dist/index.prod.html', 'dist/index.html')\"",
+    "copy-prod-html": "node -e \"import('fs').then(fs => fs.copyFileSync('dist/index.prod.html', 'dist/index.html'))\"",
     "preview": "vite preview",
     "package": "npm run build && electron-forge package",
     "make": "npm run build && electron-forge make",
@@ -22,7 +22,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build:windows": "node build-config/build-windows.js",
+    "package:windows": "cross-env TARGET_PLATFORM=win32 npm run package",
+    "make:windows": "cross-env TARGET_PLATFORM=win32 npm run make",
+    "verify:windows": "node build-config/verify-build.js win32",
+    "generate-icons": "electron-icon-builder --input=./public/app-icon.png --output=./assets"
   },
   "keywords": [],
   "author": {
@@ -39,6 +44,7 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.7.0",
     "@electron-forge/maker-deb": "^7.7.0",
+    "@electron-forge/maker-dmg": "^7.7.0",
     "@electron-forge/maker-rpm": "^7.7.0",
     "@electron-forge/maker-squirrel": "^7.7.0",
     "@electron-forge/maker-zip": "^7.7.0",
@@ -53,7 +59,10 @@
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "asar": "^3.2.0",
+    "cross-env": "^7.0.3",
     "electron": "35.0.2",
+    "electron-icon-builder": "^2.0.1",
     "electron-vite": "^2.0.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",
@@ -66,6 +75,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.5.0",
     "prettier": "^3.5.3",
+    "terser": "^5.39.0",
     "ts-jest": "^29.2.6",
     "typescript": "^5.8.2",
     "vite": "^5.4.14"

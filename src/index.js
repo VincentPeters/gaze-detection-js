@@ -1,9 +1,15 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('node:path');
-const isDev = require('electron-is-dev');
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import isDev from 'electron-is-dev';
+import { electronSquirrelStartup } from 'electron-squirrel-startup';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+if (electronSquirrelStartup) {
   app.quit();
 }
 

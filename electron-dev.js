@@ -1,7 +1,12 @@
-const { spawn } = require('child_process');
-const { createServer } = require('vite');
-const path = require('path');
-const electronPath = require('electron');
+import { spawn } from 'child_process';
+import { createServer } from 'vite';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import electron from 'electron';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function startDev() {
   // Start Vite dev server
@@ -15,7 +20,7 @@ async function startDev() {
   // Wait a bit for Vite to initialize
   setTimeout(() => {
     // Start Electron
-    const electron = spawn(electronPath, ['.'], {
+    const electronProcess = spawn(electron, ['.'], {
       stdio: 'inherit',
       env: {
         ...process.env,
@@ -23,7 +28,7 @@ async function startDev() {
       },
     });
 
-    electron.on('close', () => {
+    electronProcess.on('close', () => {
       // Kill Vite when Electron closes
       vite.close();
       process.exit();
