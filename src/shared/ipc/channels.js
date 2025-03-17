@@ -78,6 +78,59 @@ export const ChannelRegistry = {
     allowedReceivers: ['main']
   },
 
+  // Inter-window communication channels
+  'window:message': {
+    name: 'window:message',
+    description: 'Send a message from one window to another',
+    payloadSchema: {
+      targetWindowId: 'number|string', // Target window ID or 'all' for broadcast
+      data: 'any',                     // Message data
+      messageType: 'string'            // Type of message for receiver to handle
+    },
+    securityLevel: SecurityLevels.PROTECTED,
+    allowedSenders: ['all'],
+    allowedReceivers: ['main', 'all']
+  },
+
+  'window:state-sync': {
+    name: 'window:state-sync',
+    description: 'Synchronize state between windows',
+    payloadSchema: {
+      domain: 'string',        // State domain (e.g., 'app', 'camera', 'detection')
+      key: 'string',           // State key within domain
+      value: 'any',            // State value
+      source: 'string|number'  // Source window ID
+    },
+    securityLevel: SecurityLevels.PROTECTED,
+    allowedSenders: ['all'],
+    allowedReceivers: ['main', 'all']
+  },
+
+  'window:event': {
+    name: 'window:event',
+    description: 'Broadcast a window-related event',
+    payloadSchema: {
+      eventType: 'string',     // Type of event (e.g., 'focus', 'blur', 'resize')
+      windowId: 'number',      // ID of the window that triggered the event
+      data: 'any'              // Additional event data
+    },
+    securityLevel: SecurityLevels.PUBLIC,
+    allowedSenders: ['main'],
+    allowedReceivers: ['all']
+  },
+
+  'window:request-sync': {
+    name: 'window:request-sync',
+    description: 'Request synchronization of application state',
+    payloadSchema: {
+      domains: 'array',        // Array of state domains to sync
+      requestId: 'string'      // Request identifier for response matching
+    },
+    securityLevel: SecurityLevels.PROTECTED,
+    allowedSenders: ['all'],
+    allowedReceivers: ['main']
+  },
+
   // Camera channels
   'camera:list': {
     name: 'camera:list',

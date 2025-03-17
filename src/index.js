@@ -13,6 +13,7 @@ import ipcManager from './main/ipc/ipcManager.js';
 import stateStore from './main/state/store.js';
 import logger from './utils/logger/index.js';
 import keyboardShortcutManager from './main/windows/KeyboardShortcutManager.js';
+import windowCommunicationManager from './main/windows/WindowCommunicationManager.js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling
 if (electronSquirrelStartup) {
@@ -42,6 +43,9 @@ function initializeApp() {
   // Initialize the window manager (which initializes WindowStateManager)
   windowManager.initialize();
 
+  // Initialize the window communication manager
+  windowCommunicationManager.initialize();
+
   // Set application as ready
   stateStore.setState('app', 'isReady', true);
 
@@ -61,6 +65,9 @@ function cleanupApp() {
 
   // Unregister keyboard shortcuts
   keyboardShortcutManager.unregisterShortcuts();
+
+  // Shutdown the window communication manager
+  windowCommunicationManager.shutdown();
 
   // Shutdown the window manager
   windowManager.shutdown();

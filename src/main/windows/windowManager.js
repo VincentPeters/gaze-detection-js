@@ -13,6 +13,7 @@ import logger from '../../utils/logger/index.js';
 import { createNotificationMessage } from '../../shared/ipc/message.js';
 import MainWindow from './MainWindow.js';
 import windowStateManager from './WindowStateManager.js';
+import windowCommunicationManager from './WindowCommunicationManager.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -85,8 +86,17 @@ export function createMainWindow(options = {}) {
   // Set up window ID for tracking
   window.windowId = WINDOW_TYPES.MAIN;
 
+  // Add window event listeners
+  setupWindowEventListeners(window);
+
   // Track window state with the window state manager
   windowStateManager.trackWindow(window, WINDOW_TYPES.MAIN, WINDOW_TYPES.MAIN);
+
+  // Notify listeners about window creation
+  broadcastWindowEvent('window:created', {
+    type: WINDOW_TYPES.MAIN,
+    id: window.id
+  });
 
   log.info('Main window created and registered');
 
@@ -130,6 +140,9 @@ export function createFacePanelWindow(options = {}) {
     // No menu bar
     autoHideMenuBar: true,
   });
+
+  // Add window event listeners
+  setupWindowEventListeners(facePanelWindow);
 
   // Track window state with the window state manager
   windowStateManager.trackWindow(facePanelWindow, windowId, WINDOW_TYPES.FACE_PANEL);
@@ -217,6 +230,9 @@ export function createSettingsWindow(options = {}) {
     // Modal dialog
     modal: options.modal !== undefined ? options.modal : true,
   });
+
+  // Add window event listeners
+  setupWindowEventListeners(settingsWindow);
 
   // Track window state with the window state manager
   windowStateManager.trackWindow(settingsWindow, WINDOW_TYPES.SETTINGS, WINDOW_TYPES.SETTINGS);
@@ -367,6 +383,24 @@ function broadcastWindowEvent(channel, data) {
     return;
   }
 
+  // Use the window communication manager instead of direct messaging
+  if (windowCommunicationManager.initialized) {
+    // Determine the event type from channel
+    const eventType = channel.split(':')[1]; // e.g., 'window:created' -> 'created'
+
+    // Use the right event dispatcher based on the channel
+    if (channel === 'window:created' || channel === 'window:closed') {
+      // For window lifecycle events, use broadcastWindowEvent
+      windowCommunicationManager.broadcastWindowEvent(eventType, data.id, data);
+    } else {
+      // For regular messages, use broadcastMessageToAllExcept
+      windowCommunicationManager.broadcastMessageToAllExcept('main', eventType, data);
+    }
+
+    return;
+  }
+
+  // Fallback to direct messaging if windowCommunicationManager not initialized
   // Create a notification message
   const message = createNotificationMessage(
     channel,
@@ -686,6 +720,105 @@ export function bringAllToFront() {
 
   log.info(`Brought ${count} windows to front`);
   return count;
+}
+
+/**
+ * Set up event listeners for a window
+ * @param {BrowserWindow} window - The window to set up event listeners for
+ */
+function setupWindowEventListeners(window) {
+  if (!window || window.isDestroyed()) return;
+
+  // Focus event
+  window.on('focus', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'focus',
+      windowId: window.id
+    });
+  });
+
+  // Blur event
+  window.on('blur', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'blur',
+      windowId: window.id
+    });
+  });
+
+  // Resize event
+  window.on('resize', () => {
+    const bounds = window.getBounds();
+    broadcastWindowEvent('window:event', {
+      eventType: 'resize',
+      windowId: window.id,
+      data: {
+        width: bounds.width,
+        height: bounds.height
+      }
+    });
+  });
+
+  // Move event
+  window.on('move', () => {
+    const bounds = window.getBounds();
+    broadcastWindowEvent('window:event', {
+      eventType: 'move',
+      windowId: window.id,
+      data: {
+        x: bounds.x,
+        y: bounds.y
+      }
+    });
+  });
+
+  // Maximize event
+  window.on('maximize', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'maximize',
+      windowId: window.id
+    });
+  });
+
+  // Unmaximize event
+  window.on('unmaximize', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'unmaximize',
+      windowId: window.id
+    });
+  });
+
+  // Minimize event
+  window.on('minimize', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'minimize',
+      windowId: window.id
+    });
+  });
+
+  // Restore event
+  window.on('restore', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'restore',
+      windowId: window.id
+    });
+  });
+
+  // Page title updated event
+  window.on('page-title-updated', (event, title) => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'title-change',
+      windowId: window.id,
+      data: { title }
+    });
+  });
+
+  // Window ready-to-show event
+  window.once('ready-to-show', () => {
+    broadcastWindowEvent('window:event', {
+      eventType: 'ready',
+      windowId: window.id
+    });
+  });
 }
 
 export default {
