@@ -6,22 +6,24 @@
  */
 
 import { contextBridge, ipcRenderer } from 'electron';
+import {
+  getPublicChannelNames,
+  getProtectedChannelNames,
+  canSend,
+  canReceive
+} from './shared/ipc/channels.js';
 
-/**
- * List of valid IPC channels for sending messages to the main process
- */
+// Get all channels that the renderer can use
 const validSendChannels = [
-  'toMain',
-  // Add more channels as needed for specific features
-];
+  ...getPublicChannelNames(),
+  ...getProtectedChannelNames()
+].filter(channel => canSend(channel, 'renderer'));
 
-/**
- * List of valid IPC channels for receiving messages from the main process
- */
+// Get all channels that the renderer can receive on
 const validReceiveChannels = [
-  'fromMain',
-  // Add more channels as needed for specific features
-];
+  ...getPublicChannelNames(),
+  ...getProtectedChannelNames()
+].filter(channel => canReceive(channel, 'renderer'));
 
 /**
  * Expose protected methods that allow the renderer process to use
@@ -84,5 +86,31 @@ contextBridge.exposeInMainWorld('api', {
     } else {
       console.error(`Attempted to remove listener from non-whitelisted channel: ${channel}`);
     }
-  }
+  },
+
+  /**
+   * Get all valid send channels
+   * @returns {string[]} - Array of valid send channel names
+   */
+  getValidSendChannels: () => [...validSendChannels],
+
+  /**
+   * Get all valid receive channels
+   * @returns {string[]} - Array of valid receive channel names
+   */
+  getValidReceiveChannels: () => [...validReceiveChannels],
+
+  /**
+   * Check if a channel is valid for sending
+   * @param {string} channel - The channel name to check
+   * @returns {boolean} - Whether the channel is valid for sending
+   */
+  isValidSendChannel: (channel) => validSendChannels.includes(channel),
+
+  /**
+   * Check if a channel is valid for receiving
+   * @param {string} channel - The channel name to check
+   * @returns {boolean} - Whether the channel is valid for receiving
+   */
+  isValidReceiveChannel: (channel) => validReceiveChannels.includes(channel)
 });

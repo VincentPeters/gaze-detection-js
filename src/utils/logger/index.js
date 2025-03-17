@@ -128,7 +128,7 @@ export function createLogger(context) {
     debug: (message, data) => debug(`[${context}] ${message}`, data),
     info: (message, data) => info(`[${context}] ${message}`, data),
     warn: (message, data) => warn(`[${context}] ${message}`, data),
-    error: (message, error) => error(`[${context}] ${message}`, error),
+    error: (message, err) => error(`[${context}] ${message}`, err),
   };
 }
 

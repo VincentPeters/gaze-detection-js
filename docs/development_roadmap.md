@@ -4,8 +4,8 @@
 | Feature | Feature Doc | Tasks Defined | Built | Tested | Deployed | Status Notes |
 |---------|-------------|---------------|-------|--------|----------|--------------|
 | **Minimal Setup Phase** |
-| MS1: Essential Environment | ✅ | ✅ | ✅ | ❌ | ❌ | Complete - Environment setup with build and packaging configuration |
-| MS2: Critical Scaffolding | ✅ | ✅ | 🟡 | ❌ | ❌ | In Progress - 2/5 tasks completed (Directory Structure, Process Architecture) |
+| MS1: Environment Setup | ✅ | ✅ | ✅ | ❌ | ❌ | Complete - Environment setup with build and packaging configuration |
+| MS2: Application Architecture | ✅ | ✅ | 🟡 | ❌ | ❌ | In Progress - 3/5 tasks completed (Directory Structure, Process Architecture, IPC Framework) |
 | MS3: Build System Configuration | ❌ | ❌ | ❌ | ❌ | ❌ | Not started |
 | **Core Functionality Phase** |
 | CF1: Face Detection Integration | ❌ | ❌ | ❌ | ❌ | ❌ | Not started |
@@ -68,7 +68,7 @@ The development process is organized into five major phases, each representing a
 
 **Relative Priority:** High (foundational phase)
 
-#### MS1: Essential Environment
+#### MS1: Environment Setup
 
 **Description:** Set up the Electron project with React and establish the development tools and environment necessary for the project.
 
@@ -83,7 +83,7 @@ The development process is organized into five major phases, each representing a
 
 **Estimated Complexity:** Medium
 
-#### MS2: Critical Scaffolding
+#### MS2: Application Architecture
 
 **Description:** Establish the multi-window architecture and application state management that will form the foundation of the application.
 

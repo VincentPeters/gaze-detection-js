@@ -64,29 +64,19 @@
 Break down into outcome-oriented tasks that describe WHAT to accomplish, not HOW:
 
 ### Task MS2-1: Project Directory Structure Definition (DONE)
-**Objective:** Define and establish a clear, organized directory structure for the application code.
-
-**Full details in task file:** `/docs/features/MS2/feature_task_1.md`
+Define the directory structure for the project, including main and renderer process code organization, assets, and configuration files.
 
 ### Task MS2-2: Main and Renderer Process Architecture (DONE)
-**Objective:** Define the architecture and responsibility boundaries between Electron's main process and renderer processes.
+Define the architecture and responsibility boundaries between Electron's main and renderer processes.
 
-**Full details in task file:** `/docs/features/MS2/feature_task_2.md`
-
-### Task MS2-3: Inter-Process Communication Framework
-**Objective:** Establish a framework for communication between main and renderer processes, and between multiple renderer processes.
-
-**Full details in task file:** `/docs/features/MS2/feature_task_3.md`
+### Task MS2-3: Inter-Process Communication Framework (DONE)
+Establish a framework for communication between main and renderer processes that follows Electron's security best practices.
 
 ### Task MS2-4: State Management Architecture
-**Objective:** Define the approach for managing application state across components and windows.
+Define the state management approach for the application, including how state is shared between processes.
 
-**Full details in task file:** `/docs/features/MS2/feature_task_4.md`
-
-### Task MS2-5: Module and Component Organization
-**Objective:** Establish patterns for organizing reusable modules and components within the application.
-
-**Full details in task file:** `/docs/features/MS2/feature_task_5.md`
+### Task MS2-5: Build and Packaging Configuration
+Set up the build and packaging configuration for the application, including development and production builds
 
 ## 5. Interaction & Behavior Specifications
 - **User Flow Diagrams:**
